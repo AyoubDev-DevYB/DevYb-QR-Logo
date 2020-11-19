@@ -244,7 +244,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
                             outputStream.close();
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        Error(e.getMessage());
                     }
                 }
             } catch (Exception e) {
