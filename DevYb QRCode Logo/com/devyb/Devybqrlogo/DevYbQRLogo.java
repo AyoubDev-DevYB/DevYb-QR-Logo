@@ -25,12 +25,13 @@ import java.util.Map;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 
 
-@DesignerComponent(version = 1,
+@DesignerComponent(version = 2,
         description = "<p>This extension allows you to generate QR codes with logo in the middle.</p>\n" +
                 "<p>Developed by <a href=\"https://community.kodular.io/u/devyb\" rel=\"noopener noreferrer\" target=\"_blank\">DevYb</a></p>",
         category = ComponentCategory.EXTENSION,
         nonVisible = true,
         iconName = "https://res.cloudinary.com/dujfnjfcz/image/upload/v1596225104/icon16.png")
+@UsesPermissions(permissionNames = "android.permission.READ_EXTERNAL_STORAGE")
 @UsesLibraries(libraries = "zxing-3.3.1.jar")
 @SimpleObject(external = true)
 public class DevYbQRLogo extends AndroidNonvisibleComponent {
@@ -48,6 +49,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
     public DevYbQRLogo(ComponentContainer container) {
         super(container.$form());
         this.container = container;
+
         context = container.$context();
     }
 
@@ -97,34 +99,28 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
 
     @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_ASSET, defaultValue = "")
     @SimpleProperty
-    @UsesPermissions(READ_EXTERNAL_STORAGE)
     public void Logo(String path) {
         final String tempPath = (path == null) ? "" : path;
+
         if (MediaUtil.isExternalFile(tempPath)) {
             if (form.isDeniedPermission(READ_EXTERNAL_STORAGE)) {
-                form.askPermission(READ_EXTERNAL_STORAGE, new PermissionResultHandler() {
-                    @Override
-                    public void HandlePermissionResponse(String permission, boolean granted) {
-                        if (granted)
-                            logoPath = tempPath;
-                        else
-                            Error(permission + " denied");
-                    }
-                });
+                Error("permission denied");
+            }else{
+                logoPath = path;
             }
         } else {
             if (container.$form() instanceof ReplForm) {
-
                 if (context.getPackageName().equalsIgnoreCase("io.makeroid.companion")) {
                     logoPath = "/storage/emulated/0/Makeroid/assets/" + path;
-                } else
+                }else if (context.getPackageName().equalsIgnoreCase("com.niotron.companion")){
+                    logoPath = "/storage/emulated/0/Android/data/com.niotron.companion/files/assets/" + path;
+                }else{
                     logoPath = "/storage/emulated/0/Android/data/edu.mit.appinventor.aicompanion3/files/assets/" + path;
-
+                }
             } else
                 logoPath = path;
         }
     }
-
 
     @SimpleProperty
     public String Logo() {
@@ -175,7 +171,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
                 imageView.setImageBitmap(mergeBitmaps(overlay, bitmap));
             }
         } catch (Exception ex) {
-            Error(ex.getMessage());
+            Error(ex.toString());
         }
     }
 
@@ -205,7 +201,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
             CreateQRCode(text, charset, smallestDimension, smallestDimension, imageComponent, color, backgroundColor, false, null);
 
         } catch (Exception ex) {
-            Error(ex.getMessage());
+            Error(ex.toString());
         }
     }
 
@@ -219,7 +215,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
             CreateQRCode(text, charset, smallestDimension, smallestDimension, null, color, backgroundColor, true, output);
 
         } catch (Exception ex) {
-            Error(ex.getMessage());
+            Error(ex.toString());
         }
     }
 
@@ -227,6 +223,7 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
     public void Error(String error) {
         EventDispatcher.dispatchEvent(this, "Error", error);
     }
+
 
     private void saveBitmap(Bitmap bitmap, String path) {
         if (bitmap != null) {
@@ -244,17 +241,13 @@ public class DevYbQRLogo extends AndroidNonvisibleComponent {
                             outputStream.close();
                         }
                     } catch (IOException e) {
-                        Error(e.getMessage());
+                        e.printStackTrace();
                     }
                 }
             } catch (Exception e) {
-                Error(e.getMessage());
+                Error(e.toString());
             }
         }
     }
 
 }
-
-
-
-
